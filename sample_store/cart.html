@@ -1,0 +1,64 @@
+<!doctype html>
+<!-- "BEFORE" STORE CART: an old-style PayPal integration that CheckoutPilot will upgrade.
+     Gaps on purpose:
+       1. Older JS SDK with CLIENT-SIDE order creation (actions.order.create) — no server-side Orders v2 API
+       2. No Pay Later messaging
+       3. PayPal only on the cart page, not on product pages -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Your cart · Maple & Moss Candles</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <strong>Maple & Moss Candles</strong>
+    <a href="index.html">Keep shopping</a>
+  </header>
+  <main>
+    <h1>Your cart</h1>
+    <table id="cart-table"></table>
+    <p class="price">Total: $<span id="total">0.00</span></p>
+    <div id="paypal-button-container"></div>
+    <div id="result"></div>
+  </main>
+
+  <script src="store.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const rows = getCart().map((l) => {
+      const p = PRODUCTS.find((x) => x.id === l.id);
+      return `<tr><td>${p.name}</td><td>× ${l.qty}</td><td>$${(p.price * l.qty).toFixed(2)}</td></tr>`;
+    });
+    document.getElementById("cart-table").innerHTML =
+      "<tr><th>Item</th><th>Qty</th><th>Price</th></tr>" + (rows.join("") || "<tr><td colspan=3>Your cart is empty</td></tr>");
+    const total = cartTotal().toFixed(2);
+    document.getElementById("total").textContent = total;
+
+    // Load the PayPal JS SDK (older style: buttons only, everything in the browser)
+    const s = document.createElement("script");
+    s.src = "https://www.paypal.com/sdk/js?client-id=" + encodeURIComponent(window.PAYPAL_CLIENT_ID) + "&currency=USD";
+    s.onload = () => {
+      paypal.Buttons({
+        createOrder: (data, actions) =>
+          actions.order.create({ purchase_units: [{ amount: { value: total } }] }),
+        onApprove: (data, actions) =>
+          actions.order.capture().then((details) => {
+            localStorage.removeItem("cart");
+            document.getElementById("paypal-button-container").remove();
+            document.getElementById("result").innerHTML =
+              `<p class="success">Thank you, ${details.payer.name.given_name}! Payment complete.<br>
+               Order ID: <b>${details.id}</b> · Status: <b>${details.status}</b></p>`;
+          }),
+        onError: (err) => {
+          document.getElementById("result").innerHTML = `<p>PayPal error: ${err}</p>`;
+          console.error(err);
+        },
+      }).render("#paypal-button-container");
+    };
+    s.onerror = () => (document.getElementById("result").innerHTML =
+      "<p>Couldn't load PayPal. Check config.js has your sandbox Client ID.</p>");
+    document.body.appendChild(s);
+  </script>
+</body>
+</html>

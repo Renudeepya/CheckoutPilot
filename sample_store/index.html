@@ -1,0 +1,30 @@
+<!doctype html>
+<!-- "BEFORE" STORE: product pages have NO PayPal button and NO Pay Later messaging. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Maple & Moss Candles</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <strong>Maple & Moss Candles</strong>
+    <a href="cart.html">Cart (<span id="cart-count">0</span>)</a>
+  </header>
+  <main>
+    <h1>Hand-poured candles</h1>
+    <div class="grid" id="products"></div>
+  </main>
+  <script src="store.js"></script>
+  <script>
+    document.getElementById("products").innerHTML = PRODUCTS.map((p) => `
+      <div class="product">
+        <h3>${p.name}</h3>
+        <p>${p.note}</p>
+        <p class="price">$${p.price.toFixed(2)}</p>
+        <button onclick="addToCart('${p.id}')">Add to cart</button>
+      </div>`).join("");
+    document.getElementById("cart-count").textContent = cartCount();
+  </script>
+</body>
+</html>
