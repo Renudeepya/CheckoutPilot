@@ -11,11 +11,10 @@ from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, START, END
 
-load_dotenv()  # reads ANTHROPIC_API_KEY (and others) from .env
+load_dotenv(override=True)  # reads ANTHROPIC_API_KEY (and others) from .env
 
 # Small, cheap model for development. Change in .env without touching code.
-llm = ChatAnthropic(model=os.getenv("MODEL", "claude-haiku-5-5"), max_tokens=400, temperature=0)
-
+llm = ChatAnthropic(model=os.getenv("MODEL", "claude-haiku-5-5"), max_tokens=2000)
 # A deliberately outdated checkout page: one basic PayPal button, nothing else.
 SAMPLE_STORE_HTML = """
 <h1>Maple & Moss Candles</h1>
@@ -44,7 +43,7 @@ def scan(state: State) -> dict:
         "(for example: modern PayPal buttons, Pay Later messaging, PayPal on product pages). "
         "One short line each, no intro.\n\nSTORE HTML:\n" + state["html"]
     )
-    return {"gaps": msg.content}
+    return {"gaps": msg.text}
 
 
 def report(state: State) -> dict:
@@ -53,7 +52,7 @@ def report(state: State) -> dict:
         "Rewrite these findings as a friendly 3-bullet note to a small shop owner. "
         "Explain why each one could bring more sales. Keep it under 80 words.\n\n" + state["gaps"]
     )
-    return {"report": msg.content}
+    return {"report": msg.text}
 
 
 # Build the graph: START -> scan -> report -> END
